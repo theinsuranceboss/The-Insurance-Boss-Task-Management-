@@ -1,0 +1,6 @@
+{
+  "name": "The Insurance Boss Task Management",
+  "description": "A specialized task management and content scheduler app for The Insurance Boss, featuring custom branding, post categories, user mentions, dark/light mode, and an administrative control panel.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
