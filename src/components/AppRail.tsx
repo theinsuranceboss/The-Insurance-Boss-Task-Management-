@@ -106,11 +106,11 @@ export const AppRail: React.FC<AppRailProps> = ({
           </div>
         </button>
 
-        {/* CRM Customers Selector */}
+        {/* CRM Leads Selector */}
         <button
-          onClick={() => setActiveView('customers')}
+          onClick={() => setActiveView('leads')}
           className={`group relative p-2.5 rounded-xl cursor-pointer transition-all duration-200 ${
-            activeView === 'customers'
+            activeView === 'leads'
               ? 'bg-[#FAC000]/15 text-[#FAC000] border-l-2 border-[#FAC000]'
               : isDarkMode ? 'text-gray-400 hover:text-[#FAC000] hover:bg-white/5' : 'text-gray-400 hover:text-purple-600 hover:bg-gray-50'
           }`}
@@ -118,7 +118,7 @@ export const AppRail: React.FC<AppRailProps> = ({
         >
           <UserCheck className="w-[19px] h-[19px]" />
           <div className="absolute left-16 top-2 px-2 py-1 bg-gray-900 text-white text-[10px] font-semibold rounded-md whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-50 shadow-md">
-            Insurance Boss CRM Clients
+            Leads Management Window
           </div>
         </button>
 

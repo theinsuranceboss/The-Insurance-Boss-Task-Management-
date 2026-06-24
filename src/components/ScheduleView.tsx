@@ -102,42 +102,43 @@ export const ScheduleView: React.FC<ScheduleViewProps> = ({
           </div>
         </div>
 
-        {/* 7 Day horizontal columns block */}
-        <div className="flex-1 grid grid-cols-7 gap-2 overflow-y-auto min-h-0">
-          {weekDays.map((day, dIdx) => {
-            const dateNum = day.date.split(' ')[1];
-            // Tasks assigned to this specific date
-            const dateTasks = getTasksForDate(day.date);
-            const isToday = dIdx === 0 && currentWeekOffset === 0;
+        {/* 7 Day horizontal columns block with horizontal overflow container */}
+        <div className="flex-1 overflow-x-auto overflow-y-hidden min-h-0">
+          <div className="grid grid-cols-7 gap-2 min-w-[1000px] h-full pb-2">
+            {weekDays.map((day, dIdx) => {
+              const dateNum = day.date.split(' ')[1];
+              // Tasks assigned to this specific date
+              const dateTasks = getTasksForDate(day.date);
+              const isToday = dIdx === 0 && currentWeekOffset === 0;
 
-            return (
-              <div 
-                key={day.name} 
-                className={`border rounded-lg p-2.5 flex flex-col gap-2 min-h-[220px] transition-all bg-[#fafbfe]/40 ${
-                  isToday ? 'border-purple-400 ring-2 ring-purple-50 bg-purple-50/10' : 'border-gray-100'
-                }`}
-              >
-                {/* Header info */}
-                <div className="border-b border-gray-100 pb-1.5 shrink-0 flex items-center justify-between select-none">
-                  <div>
-                    <h5 className="text-[11px] font-bold text-gray-400 uppercase tracking-widest leading-none">{day.name}</h5>
-                    <span className="text-xs font-bold text-gray-700">{day.date}</span>
+              return (
+                <div 
+                  key={day.name} 
+                  className={`border rounded-lg p-2.5 flex flex-col gap-2 min-h-[220px] transition-all bg-[#fafbfe]/40 ${
+                    isToday ? 'border-purple-400 ring-2 ring-purple-50 bg-purple-50/10' : 'border-gray-100'
+                  }`}
+                >
+                  {/* Header info */}
+                  <div className="border-b border-gray-100 pb-1.5 shrink-0 flex items-center justify-between select-none">
+                    <div>
+                      <h5 className="text-[11px] font-bold text-gray-400 uppercase tracking-widest leading-none">{day.name}</h5>
+                      <span className="text-xs font-bold text-gray-700">{day.date}</span>
+                    </div>
+                    {isToday && (
+                      <span className="text-[9px] bg-purple-600 text-white font-bold px-1 py-0.2 rounded-full uppercase scale-90">Today</span>
+                    )}
                   </div>
-                  {isToday && (
-                    <span className="text-[9px] bg-purple-600 text-white font-bold px-1 py-0.2 rounded-full uppercase scale-90">Today</span>
-                  )}
-                </div>
 
-                {/* Day Tasks List */}
-                <div className="flex-1 overflow-y-auto flex flex-col gap-1.5 pr-0.5">
-                  {dateTasks.map(task => {
-                    const statusColor = task.status === 'DONE' ? 'border-l-2 border-emerald-500 bg-emerald-50/20 text-emerald-800' : 'border-l-2 border-blue-500 bg-blue-50/20 text-blue-800';
-                    return (
-                      <div 
-                        key={task.id} 
-                        className={`p-2 rounded text-[10px] font-medium leading-relaxed border border-gray-100 transition-all shadow-none hover:shadow-sm flex flex-col gap-1 cursor-pointer ${statusColor}`}
-                      >
-                        <div className="flex items-center justify-between font-semibold gap-1">
+                  {/* Day Tasks List */}
+                  <div className="flex-1 overflow-y-auto flex flex-col gap-1.5 pr-0.5">
+                    {dateTasks.map(task => {
+                      const statusColor = task.status === 'DONE' ? 'border-l-2 border-emerald-500 bg-emerald-50/20 text-emerald-800' : 'border-l-2 border-blue-500 bg-blue-50/20 text-blue-800';
+                      return (
+                        <div 
+                          key={task.id} 
+                          className={`p-2 rounded text-[10px] font-medium leading-relaxed border border-gray-100 transition-all shadow-none hover:shadow-sm flex flex-col gap-1 cursor-pointer ${statusColor}`}
+                        >
+                          <div className="flex items-center justify-between font-semibold gap-1">
                           <span className={`${task.status === 'DONE' ? 'line-through text-gray-400' : ''} truncate`}>{task.title}</span>
                           <span className="text-[9px] scale-90 opacity-80 shrink-0 font-bold font-mono">2026</span>
                         </div>
@@ -176,6 +177,7 @@ export const ScheduleView: React.FC<ScheduleViewProps> = ({
               </div>
             );
           })}
+          </div>
         </div>
       </div>
     );
@@ -199,10 +201,11 @@ export const ScheduleView: React.FC<ScheduleViewProps> = ({
         </div>
       </div>
 
-      {/* Grid wrapper */}
-      <div className="flex-1 flex flex-col border border-gray-100 rounded-xl overflow-hidden bg-[#fafbfe]/30 min-h-0">
-        {/* Day numbers column list header */}
-        <div className="grid grid-cols-12 bg-gray-50 shrink-0 border-b border-gray-150 py-2 text-[11px] font-bold text-gray-400 select-none">
+      {/* Grid wrapper with horizontal overflow */}
+      <div className="flex-1 flex flex-col border border-gray-100 rounded-xl overflow-x-auto overflow-y-hidden bg-[#fafbfe]/30 min-h-0">
+        <div className="min-w-[950px] flex flex-col flex-1 h-full">
+          {/* Day numbers column list header */}
+          <div className="grid grid-cols-12 bg-gray-50 shrink-0 border-b border-gray-150 py-2 text-[11px] font-bold text-gray-400 select-none">
           <div className="col-span-4 px-3">ACTIVE TASK</div>
           <div className="col-span-8 grid grid-cols-7 text-center">
             {weekDays.map(wd => (
@@ -300,6 +303,7 @@ export const ScheduleView: React.FC<ScheduleViewProps> = ({
               </div>
             );
           })}
+        </div>
         </div>
       </div>
     </div>

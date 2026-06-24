@@ -22,7 +22,7 @@ import {
   Send,
   UserPlus
 } from 'lucide-react';
-import { Task, TaskStatus, Priority, Member, CommentItem } from '../types';
+import { Task, TaskStatus, Priority, Member, CommentItem, CustomFieldConfig } from '../types';
 
 interface TaskViewProps {
   tasks: Task[];
@@ -50,6 +50,8 @@ interface TaskViewProps {
   isDarkMode: boolean;
   currentUser: { id: string; name: string; avatar: string; role: 'admin' | 'user' } | null;
   selectedFolder?: string;
+  customFields: CustomFieldConfig;
+  onUpdateCustomFields: (fields: CustomFieldConfig) => void;
 }
 
 const MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
@@ -68,7 +70,9 @@ export const TaskView: React.FC<TaskViewProps> = ({
   searchTerm,
   isDarkMode,
   currentUser,
-  selectedFolder = 'Campaigns'
+  selectedFolder = 'Campaigns',
+  customFields,
+  onUpdateCustomFields
 }) => {
   const [collapsedGroups, setCollapsedGroups] = useState<Record<string, boolean>>({
     'PENDING': false,
@@ -78,6 +82,21 @@ export const TaskView: React.FC<TaskViewProps> = ({
     'SCHEDULED': false,
     'POSTED': false,
   });
+
+  // Customization Modal states
+  const [isConfiguringFields, setIsConfiguringFields] = useState(false);
+  const [tempLabel1, setTempLabel1] = useState(customFields.label1);
+  const [tempOptions1, setTempOptions1] = useState(customFields.options1.join(', '));
+  const [tempLabel2, setTempLabel2] = useState(customFields.label2);
+  const [tempOptions2, setTempOptions2] = useState(customFields.options2.join(', '));
+
+  // Sync temp states if customFields changes
+  React.useEffect(() => {
+    setTempLabel1(customFields.label1);
+    setTempOptions1(customFields.options1.join(', '));
+    setTempLabel2(customFields.label2);
+    setTempOptions2(customFields.options2.join(', '));
+  }, [customFields]);
 
   // Selected task for sidepeek details
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
@@ -90,8 +109,8 @@ export const TaskView: React.FC<TaskViewProps> = ({
   const [newTaskPriority, setNewTaskPriority] = useState<Priority>('NORMAL');
   const [newTaskMonth, setNewTaskMonth] = useState('April');
   const [newTaskWeek, setNewTaskWeek] = useState('Week 1');
-  const [newTaskPostType, setNewTaskPostType] = useState('AnimatedVideo');
-  const [newTaskSocial, setNewTaskSocial] = useState('Instagram/Facebook');
+  const [newTaskPostType, setNewTaskPostType] = useState('');
+  const [newTaskSocial, setNewTaskSocial] = useState('');
   const [newTaskAssignees, setNewTaskAssignees] = useState<string[]>([]);
   const [newUrl, setNewUrl] = useState('');
   const [newTaskDueDate, setNewTaskDueDate] = useState('2026-04-30');
@@ -123,8 +142,8 @@ export const TaskView: React.FC<TaskViewProps> = ({
         newTaskAssignees,
         newTaskMonth,
         newTaskWeek,
-        newTaskPostType,
-        newTaskSocial,
+        newTaskPostType || customFields.options1[0] || '',
+        newTaskSocial || customFields.options2[0] || '',
         newUrl.trim(),
         newTaskDescription.trim(),
         newTaskIsDaily,
@@ -312,7 +331,7 @@ export const TaskView: React.FC<TaskViewProps> = ({
       isDarkMode ? 'bg-[#000000]' : 'bg-white'
     }`} id="tasks-view-root">
       {/* LEFT PORTION: Task Hierarchy List of Rows */}
-      <div className="flex-1 overflow-y-auto p-4 shrink-0 min-w-0 flex flex-col">
+      <div className="flex-1 overflow-auto p-4 min-w-0 flex flex-col" id="tasks-list-scroll-container">
         
         {/* Daily Tasks Checklist Widget */}
         <div className={`p-4 rounded-xl border mb-6 relative overflow-hidden transition-all ${
@@ -320,17 +339,26 @@ export const TaskView: React.FC<TaskViewProps> = ({
             ? 'bg-[#050505] border-yellow-500/20 text-white shadow-[0_0_15px_rgba(250,192,0,0.02)]' 
             : 'bg-[#FAC000]/5 border-yellow-200 text-gray-850 shadow-sm'
         }`} id="daily-checklist-container">
-          <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center justify-between mb-4 flex-wrap gap-2">
             <div className="flex items-center gap-2.5">
               <span className="w-8 h-8 rounded-lg bg-[#FAC000]/10 flex items-center justify-center text-sm border border-[#FAC000]/20">☀️</span>
               <div>
                 <h3 className="text-xs font-black uppercase text-[#FAC000] tracking-wider">Today's Daily Tasks — {selectedFolder}</h3>
-                <p className="text-[10px] text-gray-400 font-medium">Daily recurring campaigns and social schedules for consistent brand presence</p>
+                <p className="text-[10px] text-gray-400 font-medium">Daily recurring tasks and custom niche insurance segments</p>
               </div>
             </div>
-            <span className="text-[9px] bg-[#FAC000]/15 text-[#FAC000] px-2.5 py-0.5 rounded-full font-black border border-[#FAC000]/30 uppercase font-mono tracking-wider">
-              {tasks.filter(t => t.isDaily && (t.folderName || 'Campaigns').toLowerCase() === selectedFolder.toLowerCase()).length} ACTIVE
-            </span>
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() => setIsConfiguringFields(true)}
+                className="text-[10px] bg-[#FAC000]/15 hover:bg-[#FAC000]/30 text-[#FAC000] px-3 py-1.5 rounded-full font-black border border-[#FAC000]/30 uppercase tracking-wider flex items-center gap-1 cursor-pointer transition-all active:scale-95"
+              >
+                <span>⚙️ Customize Fields</span>
+              </button>
+              <span className="text-[9px] bg-[#FAC000]/15 text-[#FAC000] px-2.5 py-0.5 rounded-full font-black border border-[#FAC000]/30 uppercase font-mono tracking-wider">
+                {tasks.filter(t => t.isDaily && (t.folderName || 'Campaigns').toLowerCase() === selectedFolder.toLowerCase()).length} ACTIVE
+              </span>
+            </div>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
@@ -385,17 +413,23 @@ export const TaskView: React.FC<TaskViewProps> = ({
                       ))}
                     </select>
 
-                    {/* Member Assignee badge */}
-                    {task.assigneeIds && task.assigneeIds[0] && (
-                      <div className="w-5 h-5 rounded-full overflow-hidden shrink-0 border border-gray-950">
-                        <img 
-                          src={members.find(m => m.id === task.assigneeIds[0])?.avatar || "https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&w=120&q=80"} 
-                          alt="member" 
-                          className="w-full h-full object-cover"
-                          referrerPolicy="no-referrer"
-                        />
-                      </div>
-                    )}
+                    {/* Member Assignee badges overlapping */}
+                    <div className="flex -space-x-1.5 overflow-hidden">
+                      {task.assigneeIds && task.assigneeIds.map(aid => {
+                        const m = members.find(member => member.id === aid);
+                        if (!m) return null;
+                        return (
+                          <div key={aid} className="w-5 h-5 rounded-full overflow-hidden shrink-0 border border-gray-950" title={m.name}>
+                            <img 
+                              src={m.avatar} 
+                              alt={m.name} 
+                              className="w-full h-full object-cover"
+                              referrerPolicy="no-referrer"
+                            />
+                          </div>
+                        );
+                      })}
+                    </div>
                   </div>
                 </div>
               );
@@ -410,7 +444,8 @@ export const TaskView: React.FC<TaskViewProps> = ({
         </div>
 
         {/* Table Column Grid Headers */}
-        <div className={`grid grid-cols-12 px-3 py-2 text-[10px] font-black tracking-wider uppercase mb-2 sticky top-0 z-10 select-none pb-2.5 border-b ${
+        <div className="min-w-[950px] flex flex-col">
+          <div className={`grid grid-cols-12 px-3 py-2 text-[10px] font-black tracking-wider uppercase mb-2 sticky top-0 z-10 select-none pb-2.5 border-b ${
           isDarkMode 
             ? 'bg-black/85 backdrop-blur-md text-gray-500 border-gray-900' 
             : 'bg-white/95 backdrop-blur-md text-gray-400 border-[#f1f3f5]'
@@ -422,8 +457,8 @@ export const TaskView: React.FC<TaskViewProps> = ({
           <div className="col-span-1 text-center font-bold">Messages</div>
           <div className="col-span-1 text-center">Month Plan</div>
           <div className="col-span-1 text-center">Week</div>
-          <div className="col-span-2 text-center">Post Type</div>
-          <div className="col-span-2 text-center text-right pr-6">Social Platform</div>
+          <div className="col-span-2 text-center truncate">{customFields.label1}</div>
+          <div className="col-span-2 text-center text-right pr-6 truncate">{customFields.label2}</div>
         </div>
 
         {/* Sections for Status checkup */}
@@ -571,18 +606,31 @@ export const TaskView: React.FC<TaskViewProps> = ({
                           />
                         </div>
 
-                        <div>
-                          <label className="block text-[9px] uppercase font-bold text-gray-500 mb-1">Assignee Colleague</label>
-                          <select
-                            value={newTaskAssignees[0] || ''}
-                            onChange={(e) => setNewTaskAssignees(e.target.value ? [e.target.value] : [])}
-                            className={`w-full text-xs p-1.5 rounded border focus:outline-none ${
-                              isDarkMode ? 'bg-[#0a0a0c] border-gray-800 text-gray-300' : 'bg-white border-gray-200 text-gray-900'
-                            }`}
-                          >
-                            <option value="">Unassigned</option>
-                            {members.map(m => <option key={m.id} value={m.id}>{m.name}</option>)}
-                          </select>
+                        <div className="col-span-1 md:col-span-2">
+                          <label className="block text-[9px] uppercase font-bold text-gray-500 mb-1">Assignee Colleagues (Joint Task selection)</label>
+                          <div className="flex flex-wrap gap-1.5 max-h-[120px] overflow-y-auto p-1.5 border rounded border-gray-800 bg-black/10">
+                            {members.map(m => {
+                              const isSelected = newTaskAssignees.includes(m.id);
+                              return (
+                                <button
+                                  key={m.id}
+                                  type="button"
+                                  onClick={() => setNewTaskAssignees(prev => 
+                                    prev.includes(m.id) ? prev.filter(id => id !== m.id) : [...prev, m.id]
+                                  )}
+                                  className={`flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold border transition-all cursor-pointer ${
+                                    isSelected 
+                                      ? 'bg-[#FAC000]/20 border-[#FAC000] text-[#FAC000]' 
+                                      : 'bg-black/25 border-transparent text-gray-400 hover:text-white'
+                                  }`}
+                                >
+                                  <img src={m.avatar} alt="" className="w-3.5 h-3.5 rounded-full object-cover" />
+                                  <span>{m.name}</span>
+                                </button>
+                              );
+                            })}
+                            {members.length === 0 && <span className="text-[10px] text-gray-505 italic">No agents active</span>}
+                          </div>
                         </div>
 
                         <div>
@@ -612,28 +660,28 @@ export const TaskView: React.FC<TaskViewProps> = ({
                         </div>
 
                         <div>
-                          <label className="block text-[9px] uppercase font-bold text-gray-500 mb-1">Tipo de Post</label>
+                          <label className="block text-[9px] uppercase font-bold text-gray-500 mb-1">{customFields.label1}</label>
                           <select
-                            value={newTaskPostType}
+                            value={newTaskPostType || customFields.options1[0] || ''}
                             onChange={(e) => setNewTaskPostType(e.target.value)}
                             className={`w-full text-xs p-1.5 rounded border focus:outline-none ${
                               isDarkMode ? 'bg-[#0a0a0c] border-gray-800 text-gray-300' : 'bg-white border-gray-200 text-gray-800'
                             }`}
                           >
-                            {POST_TYPES.map(p => <option key={p} value={p}>{p}</option>)}
+                            {customFields.options1.map(p => <option key={p} value={p}>{p}</option>)}
                           </select>
                         </div>
 
                         <div>
-                          <label className="block text-[9px] uppercase font-bold text-gray-500 mb-1">Red Social</label>
+                          <label className="block text-[9px] uppercase font-bold text-gray-500 mb-1">{customFields.label2}</label>
                           <select
-                            value={newTaskSocial}
+                            value={newTaskSocial || customFields.options2[0] || ''}
                             onChange={(e) => setNewTaskSocial(e.target.value)}
                             className={`w-full text-xs p-1.5 rounded border focus:outline-none ${
                               isDarkMode ? 'bg-[#0a0a0c] border-gray-800 text-gray-300' : 'bg-white border-gray-200 text-gray-800'
                             }`}
                           >
-                            {SOCIAL_MEDIA_PLATFORMS.map(sm => <option key={sm} value={sm}>{sm}</option>)}
+                            {customFields.options2.map(sm => <option key={sm} value={sm}>{sm}</option>)}
                           </select>
                         </div>
                       </div>
@@ -792,6 +840,26 @@ export const TaskView: React.FC<TaskViewProps> = ({
                             {task.description && (
                               <span className="text-[10px] text-gray-500 truncate">{task.description}</span>
                             )}
+                            {task.assigneeIds && task.assigneeIds.length > 0 && (
+                              <div className="flex items-center gap-1 mt-1 flex-wrap">
+                                <div className="flex -space-x-1 overflow-hidden">
+                                  {task.assigneeIds.map(aid => {
+                                    const m = members.find(member => member.id === aid);
+                                    if (!m) return null;
+                                    return (
+                                      <img 
+                                        key={aid} 
+                                        src={m.avatar} 
+                                        alt={m.name} 
+                                        title={m.name} 
+                                        className="w-3.5 h-3.5 rounded-full border border-black object-cover shrink-0" 
+                                        referrerPolicy="no-referrer"
+                                      />
+                                    );
+                                  })}
+                                </div>
+                              </div>
+                            )}
                           </div>
                         </div>
 
@@ -867,15 +935,15 @@ export const TaskView: React.FC<TaskViewProps> = ({
                         {/* Type of Post switcher */}
                         <div className="col-span-2 px-1">
                           <select
-                            value={task.typeOfPost || 'AnimatedVideo'}
+                            value={task.typeOfPost || customFields.options1[0] || ''}
                             onChange={(e) => handleTaskCellChange(task.id, 'typeOfPost', e.target.value)}
                             className={`w-full text-[11px] font-black p-1 rounded-md border outline-none transition-all cursor-pointer ${
                               isDarkMode 
-                                ? 'bg-indigo-950/40 border-indigo-900/60 text-blue-400 focus:border-[#FAC000] font-bold' 
+                                ? 'bg-[#1b1c25] border-gray-800 text-blue-400 focus:border-[#FAC000] font-bold' 
                                 : 'bg-blue-50 border-blue-200 text-blue-800 font-bold'
                             }`}
                           >
-                            {POST_TYPES.map(pt => (
+                            {customFields.options1.map(pt => (
                               <option key={pt} value={pt} className="bg-[#121319] text-white font-bold">
                                 {pt}
                               </option>
@@ -886,15 +954,15 @@ export const TaskView: React.FC<TaskViewProps> = ({
                         {/* Social Media Platform column */}
                         <div className="col-span-2 pl-1.5 pr-2 flex items-center justify-between gap-1.5">
                           <select
-                            value={task.socialMedia || 'Instagram/Facebook'}
+                            value={task.socialMedia || customFields.options2[0] || ''}
                             onChange={(e) => handleTaskCellChange(task.id, 'socialMedia', e.target.value)}
                             className={`w-full text-[11px] font-black px-1.5 py-1 rounded-md border outline-none cursor-pointer ${
                               isDarkMode 
-                                ? 'bg-pink-950/20 border-pink-905/40 text-pink-400 font-bold' 
+                                ? 'bg-[#1b1c25] border-gray-800 text-pink-400 font-bold' 
                                 : 'bg-pink-50 border-pink-200 text-pink-805 font-bold'
                             }`}
                           >
-                            {SOCIAL_MEDIA_PLATFORMS.map(sm => (
+                            {customFields.options2.map(sm => (
                               <option key={sm} value={sm} className="bg-[#121319] text-white font-bold">
                                 {sm}
                               </option>
@@ -918,6 +986,7 @@ export const TaskView: React.FC<TaskViewProps> = ({
             </div>
           );
         })}
+        </div>
       </div>
 
       {/* RIGHT SIDEPEEK: Details Slideout layout with tag mentions comments */}
@@ -1011,29 +1080,29 @@ export const TaskView: React.FC<TaskViewProps> = ({
 
                 {/* Type of Post Picker */}
                 <div>
-                  <label className="block text-[10px] font-bold text-gray-400 mb-1">Post Type format</label>
+                  <label className="block text-[10px] font-bold text-gray-400 mb-1">{customFields.label1}</label>
                   <select
-                    value={selectedTask.typeOfPost || 'AnimatedVideo'}
+                    value={selectedTask.typeOfPost || customFields.options1[0] || ''}
                     onChange={(e) => handleTaskCellChange(selectedTask.id, 'typeOfPost', e.target.value)}
                     className={`w-full p-2 rounded outline-none text-xs ${
                       isDarkMode ? 'bg-[#1c1d29] text-white border border-gray-800' : 'bg-gray-100 text-gray-855'
                     }`}
                   >
-                    {POST_TYPES.map(pt => <option key={pt} value={pt}>{pt}</option>)}
+                    {customFields.options1.map(pt => <option key={pt} value={pt}>{pt}</option>)}
                   </select>
                 </div>
 
                 {/* Social Media Platform column */}
                 <div>
-                  <label className="block text-[10px] font-bold text-gray-400 mb-1">Destination Social Channel</label>
+                  <label className="block text-[10px] font-bold text-gray-400 mb-1">{customFields.label2}</label>
                   <select
-                    value={selectedTask.socialMedia || 'Instagram/Facebook'}
+                    value={selectedTask.socialMedia || customFields.options2[0] || ''}
                     onChange={(e) => handleTaskCellChange(selectedTask.id, 'socialMedia', e.target.value)}
                     className={`w-full p-2 rounded outline-none text-xs ${
                       isDarkMode ? 'bg-[#1c1d29] text-white border border-gray-800' : 'bg-gray-100 text-gray-855'
                     }`}
                   >
-                    {SOCIAL_MEDIA_PLATFORMS.map(sm => <option key={sm} value={sm}>{sm}</option>)}
+                    {customFields.options2.map(sm => <option key={sm} value={sm}>{sm}</option>)}
                   </select>
                 </div>
 
@@ -1051,17 +1120,35 @@ export const TaskView: React.FC<TaskViewProps> = ({
                 </div>
 
                 {/* Assignees Column */}
-                <div>
-                  <label className="block text-[10px] font-bold text-gray-400 mb-1">Assignee Colleague</label>
-                  <select
-                    value={selectedTask.assigneeIds && selectedTask.assigneeIds[0]}
-                    onChange={(e) => handleTaskCellChange(selectedTask.id, 'assigneeIds', [e.target.value])}
-                    className={`w-full p-2 rounded outline-none text-xs ${
-                      isDarkMode ? 'bg-[#1c1d29] text-white border border-gray-800' : 'bg-gray-100 text-gray-800 border-transparent'
-                    }`}
-                  >
-                    {members.map(m => <option key={m.id} value={m.id}>{m.name}</option>)}
-                  </select>
+                <div className="col-span-1">
+                  <label className="block text-[10px] font-bold text-gray-400 mb-1">Assignee Colleagues (Joint Task selection)</label>
+                  <div className="flex flex-wrap gap-1.5 p-2 rounded border border-gray-800 bg-black/15">
+                    {members.map(m => {
+                      const taskAssignees = selectedTask.assigneeIds || [];
+                      const isSelected = taskAssignees.includes(m.id);
+                      return (
+                        <button
+                          key={m.id}
+                          type="button"
+                          onClick={() => {
+                            const newAssignees = isSelected
+                              ? taskAssignees.filter(id => id !== m.id)
+                              : [...taskAssignees, m.id];
+                            handleTaskCellChange(selectedTask.id, 'assigneeIds', newAssignees);
+                          }}
+                          className={`flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold border transition-all cursor-pointer ${
+                            isSelected 
+                              ? 'bg-[#FAC000]/20 border-[#FAC000] text-[#FAC000]' 
+                              : 'bg-black/25 border-transparent text-gray-400 hover:text-white'
+                          }`}
+                        >
+                          <img src={m.avatar} alt="" className="w-3.5 h-3.5 rounded-full object-cover" />
+                          <span>{m.name}</span>
+                        </button>
+                      );
+                    })}
+                    {members.length === 0 && <span className="text-[10px] text-gray-500 italic">No agents active</span>}
+                  </div>
                 </div>
 
                 {/* Daily Switch toggle inside metadata block */}
@@ -1270,6 +1357,109 @@ export const TaskView: React.FC<TaskViewProps> = ({
                 </button>
               </div>
             </div>          </div>
+          </div>
+        </div>
+      )}
+
+      {/* Customize Fields Modal */}
+      {isConfiguringFields && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-fadeIn" id="customize-fields-modal">
+          <div className={`w-full max-w-md p-6 rounded-2xl border shadow-2xl transition-all ${
+            isDarkMode ? 'bg-[#0f111a] border-[#1f2129] text-white shadow-[0_0_50px_rgba(250,192,0,0.05)]' : 'bg-white border-gray-200 text-gray-900'
+          }`}>
+            <div className="flex items-center justify-between mb-4 pb-3 border-b border-gray-800/40">
+              <h3 className="text-xs font-black uppercase text-[#FAC000] tracking-wider">Customize Niche Fields</h3>
+              <button 
+                type="button"
+                onClick={() => setIsConfiguringFields(false)}
+                className="text-gray-400 hover:text-white text-sm cursor-pointer"
+              >
+                ✕
+              </button>
+            </div>
+
+            <p className="text-[11px] text-gray-400 mb-4 leading-relaxed">
+              Define the naming and drop-down selection options for your insurance niche custom fields. Updates will apply in real-time across the workspace dropdown selectors, headers, and task addition forms.
+            </p>
+
+            <div className="space-y-4">
+              <div>
+                <label className="block text-[10px] uppercase font-bold text-gray-400 mb-1">Field 1 Label (e.g. Policy Type / Niche)</label>
+                <input
+                  type="text"
+                  value={tempLabel1}
+                  onChange={(e) => setTempLabel1(e.target.value)}
+                  className={`w-full text-xs p-2 rounded border focus:outline-none focus:border-[#FAC000] ${
+                    isDarkMode ? 'bg-[#050505] border-gray-800 text-white' : 'bg-gray-50 border-gray-200 text-gray-900'
+                  }`}
+                  placeholder="Policy Type"
+                />
+              </div>
+
+              <div>
+                <label className="block text-[10px] uppercase font-bold text-gray-400 mb-1">Field 1 Options (Comma separated list)</label>
+                <textarea
+                  value={tempOptions1}
+                  onChange={(e) => setTempOptions1(e.target.value)}
+                  rows={2}
+                  className={`w-full text-xs p-2 rounded border focus:outline-none focus:border-[#FAC000] ${
+                    isDarkMode ? 'bg-[#050505] border-gray-800 text-white' : 'bg-gray-50 border-gray-200 text-gray-900'
+                  }`}
+                  placeholder="Life, Auto, Home, Health, Commercial"
+                />
+              </div>
+
+              <div>
+                <label className="block text-[10px] uppercase font-bold text-gray-400 mb-1">Field 2 Label (e.g. Action Required / Segment)</label>
+                <input
+                  type="text"
+                  value={tempLabel2}
+                  onChange={(e) => setTempLabel2(e.target.value)}
+                  className={`w-full text-xs p-2 rounded border focus:outline-none focus:border-[#FAC000] ${
+                    isDarkMode ? 'bg-[#050505] border-gray-800 text-white' : 'bg-gray-50 border-gray-200 text-gray-900'
+                  }`}
+                  placeholder="Action Item"
+                />
+              </div>
+
+              <div>
+                <label className="block text-[10px] uppercase font-bold text-gray-400 mb-1">Field 2 Options (Comma separated list)</label>
+                <textarea
+                  value={tempOptions2}
+                  onChange={(e) => setTempOptions2(e.target.value)}
+                  rows={2}
+                  className={`w-full text-xs p-2 rounded border focus:outline-none focus:border-[#FAC000] ${
+                    isDarkMode ? 'bg-[#050505] border-gray-800 text-white' : 'bg-gray-50 border-gray-200 text-gray-900'
+                  }`}
+                  placeholder="Policy Renewal, Claims Management, Sales Pitch"
+                />
+              </div>
+            </div>
+
+            <div className="flex gap-3 mt-6 pt-3 border-t border-gray-800/40">
+              <button
+                type="button"
+                onClick={() => setIsConfiguringFields(false)}
+                className="flex-1 bg-black/40 hover:bg-black/60 text-gray-400 text-xs font-bold py-2 rounded border border-gray-850 cursor-pointer transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  onUpdateCustomFields({
+                    label1: tempLabel1.trim() || 'Custom Field 1',
+                    options1: tempOptions1.split(',').map(s => s.trim()).filter(Boolean),
+                    label2: tempLabel2.trim() || 'Custom Field 2',
+                    options2: tempOptions2.split(',').map(s => s.trim()).filter(Boolean)
+                  });
+                  setIsConfiguringFields(false);
+                }}
+                className="flex-1 bg-[#FAC000] hover:bg-[#e0ab00] text-black text-xs font-black py-2 rounded transition-colors cursor-pointer"
+              >
+                Save Changes
+              </button>
+            </div>
           </div>
         </div>
       )}

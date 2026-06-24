@@ -174,20 +174,52 @@ export const WorkspaceHeader: React.FC<WorkspaceHeaderProps> = ({
             </button>
           </li>
 
-          {/* Customers view */}
+          {/* Leads view */}
           <li>
             <button
-              onClick={() => setActiveTab('customers')}
+              onClick={() => setActiveTab('leads')}
               className={`flex items-center gap-1.5 px-3 py-2 border-b-2 font-bold cursor-pointer transition-all ${
-                activeTab === 'customers'
+                activeTab === 'leads'
                   ? isDarkMode ? 'border-[#FAC000] text-[#FAC000] bg-[#FAC000]/5' : 'border-[#FAC000] text-yellow-800 bg-yellow-50/20'
                   : isDarkMode ? 'border-transparent text-gray-400 hover:text-white' : 'border-transparent text-gray-550 hover:text-gray-900'
               }`}
             >
               <Users className="w-3.5 h-3.5 text-teal-400" />
-              <span className="text-[11px]">CRM Clients</span>
+              <span className="text-[11px]">Leads Window</span>
             </button>
           </li>
+
+          {/* Agents View */}
+          <li>
+            <button
+              onClick={() => setActiveTab('agents')}
+              className={`flex items-center gap-1.5 px-3 py-2 border-b-2 font-bold cursor-pointer transition-all ${
+                activeTab === 'agents'
+                  ? isDarkMode ? 'border-[#FAC000] text-[#FAC000] bg-[#FAC000]/5' : 'border-[#FAC000] text-yellow-800 bg-yellow-50/20'
+                  : isDarkMode ? 'border-transparent text-gray-400 hover:text-white' : 'border-transparent text-gray-550 hover:text-gray-900'
+              }`}
+            >
+              <Users className="w-3.5 h-3.5 text-[#FAC000]" />
+              <span className="text-[11px]">Agents</span>
+            </button>
+          </li>
+
+          {/* Landing Page Editor View (Admin Only) */}
+          {currentUser?.role === 'admin' && (
+            <li>
+              <button
+                onClick={() => setActiveTab('landing')}
+                className={`flex items-center gap-1.5 px-3 py-2 border-b-2 font-bold cursor-pointer transition-all ${
+                  activeTab === 'landing'
+                    ? isDarkMode ? 'border-[#FAC000] text-[#FAC000] bg-[#FAC000]/5' : 'border-[#FAC000] text-yellow-800 bg-yellow-50/20'
+                    : isDarkMode ? 'border-transparent text-gray-400 hover:text-white' : 'border-transparent text-gray-550 hover:text-gray-900'
+                }`}
+              >
+                <span className="text-[10px] font-black uppercase tracking-tight px-1 py-0.2 bg-[#FAC000]/15 text-[#FAC000] rounded">LP</span>
+                <span className="text-[11px]">Landing Page</span>
+              </button>
+            </li>
+          )}
         </ul>
 
         {/* View Layout Personalizer */}

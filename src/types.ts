@@ -10,6 +10,9 @@ export interface Member {
   status: 'active' | 'focus' | 'offline' | 'meeting' | 'lunch';
   role: string;
   badgeCount?: number;
+  username?: string;
+  password?: string;
+  email?: string;
 }
 
 export interface SubTask {
@@ -53,7 +56,50 @@ export interface Task {
   folderName?: string;
 }
 
-export type ActiveTab = 'chat' | 'tasks' | 'schedule' | 'gantt' | 'customers' | 'admin';
+export interface Agency {
+  agencyName: string;
+  employees: string;
+  email: string;
+  username: string;
+  password: string;
+}
+
+export interface AgentTeam {
+  id: string;
+  name: string;
+  description: string;
+  memberIds: string[];
+}
+
+export interface Lead {
+  id: string;
+  name: string;
+  email: string;
+  phone: string;
+  policyInterest: string;
+  status: 'New' | 'Contacted' | 'Proposal Sent' | 'Closed Won' | 'Closed Lost';
+  value: string;
+  agentId?: string;
+  notes: string;
+  createdAt: string;
+}
+
+export interface CustomFieldConfig {
+  label1: string;
+  options1: string[];
+  label2: string;
+  options2: string[];
+}
+
+export type ActiveTab = 'chat' | 'tasks' | 'schedule' | 'gantt' | 'leads' | 'admin' | 'landing' | 'agents';
+
+export interface LandingPageTexts {
+  badgeText: string;
+  heroTitle: string;
+  heroSubtitle: string;
+  heroDescription: string;
+  footerText: string;
+}
 
 export interface ChatMessage {
   id: string;

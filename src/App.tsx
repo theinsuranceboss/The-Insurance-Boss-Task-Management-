@@ -6,9 +6,11 @@ import { WorkspaceHeader } from './components/WorkspaceHeader';
 import { TaskView } from './components/TaskView';
 import { ChatView } from './components/ChatView';
 import { ScheduleView } from './components/ScheduleView';
-import { CustomersView } from './components/CustomersView';
+import { LeadsView } from './components/LeadsView';
 import { LandingPage } from './components/LandingPage';
 import { AdminPanel } from './components/AdminPanel';
+import { LandingPageEditor } from './components/LandingPageEditor';
+import { AgentsView } from './components/AgentsView';
 
 import { 
   INITIAL_MEMBERS, 
@@ -16,19 +18,123 @@ import {
   INITIAL_CUSTOMERS, 
   INITIAL_CHAT_MESSAGES 
 } from './data/mockData';
-import { Task, TaskStatus, Priority, Member, Customer, ChatMessage, ActiveTab } from './types';
+import { Task, TaskStatus, Priority, Member, Lead, ChatMessage, ActiveTab, AgentTeam, LandingPageTexts } from './types';
 
 export default function App() {
   // Global Database states
   const [tasks, setTasks] = useState<Task[]>(INITIAL_TASKS);
   const [members, setMembers] = useState<Member[]>(INITIAL_MEMBERS);
-  const [customers, setCustomers] = useState<Customer[]>(INITIAL_CUSTOMERS);
+  const [leads, setLeads] = useState<Lead[]>(() => {
+    const saved = localStorage.getItem('agency_leads');
+    if (saved) {
+      try {
+        return JSON.parse(saved);
+      } catch (e) {}
+    }
+    return [
+      {
+        id: 'lead-1',
+        name: 'Roberto Gómez',
+        email: 'roberto.g@gmail.com',
+        phone: '555-0199',
+        policyInterest: 'Life Insurance',
+        status: 'New',
+        value: '$1,500',
+        agentId: 'alex',
+        notes: 'Interesado en un seguro de vida a término de 20 años.',
+        createdAt: '2026-06-20'
+      },
+      {
+        id: 'lead-2',
+        name: 'Maria Elena Fuentes',
+        email: 'maria.fuentes@outlook.com',
+        phone: '555-0144',
+        policyInterest: 'Auto Insurance',
+        status: 'Contacted',
+        value: '$850',
+        agentId: 'dean',
+        notes: 'Quiere cotización de cobertura total para dos autos.',
+        createdAt: '2026-06-22'
+      }
+    ];
+  });
   const [messages, setMessages] = useState<ChatMessage[]>(INITIAL_CHAT_MESSAGES);
+
+  // Teams state initialized from localStorage
+  const [teams, setTeams] = useState<AgentTeam[]>(() => {
+    const saved = localStorage.getItem('agency_teams');
+    if (saved) {
+      try {
+        return JSON.parse(saved);
+      } catch (e) {}
+    }
+    return [
+      {
+        id: 'team-1',
+        name: 'Sales Avengers',
+        description: 'Elite insurance outbound outreach specialists and closing agents.',
+        memberIds: ['alex', 'dean']
+      },
+      {
+        id: 'team-2',
+        name: 'Retention Heroes',
+        description: 'Customer service, policy renewal, and client satisfaction team.',
+        memberIds: ['zeb', 'sara']
+      }
+    ];
+  });
+
+  // Custom Niche Fields States
+  const [customFields, setCustomFields] = useState<{
+    label1: string;
+    options1: string[];
+    label2: string;
+    options2: string[];
+  }>(() => {
+    const saved = localStorage.getItem('agency_custom_fields');
+    if (saved) {
+      try {
+        return JSON.parse(saved);
+      } catch (e) {}
+    }
+    return {
+      label1: 'Policy Segment',
+      options1: ['Life Insurance', 'Auto Insurance', 'Home Insurance', 'Health Insurance', 'Business Insurance', 'None'],
+      label2: 'Activity Type',
+      options2: ['Policy Review', 'Renewal Outreach', 'Claim Follow-up', 'New Lead Pitch', 'Referral Request', 'None']
+    };
+  });
+
+  const handleUpdateCustomFields = (fields: typeof customFields) => {
+    setCustomFields(fields);
+    localStorage.setItem('agency_custom_fields', JSON.stringify(fields));
+  };
 
   // App Configuration States
   const [isDarkMode, setIsDarkMode] = useState(true);
   const [showLanding, setShowLanding] = useState(true);
   const [currentUser, setCurrentUser] = useState<{ id: string; name: string; avatar: string; role: 'admin' | 'user' } | null>(null);
+
+  const [landingTexts, setLandingTexts] = useState<LandingPageTexts>(() => {
+    const saved = localStorage.getItem('agency_landing_texts');
+    if (saved) {
+      try {
+        return JSON.parse(saved);
+      } catch (e) {}
+    }
+    return {
+      badgeText: "Insurance Broker Multi-Agent Workstation",
+      heroTitle: "The Insurance Boss",
+      heroSubtitle: "Agency Management System",
+      heroDescription: "A premium collaborative workspace built specifically for insurance broker networks, multi-agent offices, and underwriters. Setup your agency account instantly to start blank, invite agents, create agent teams, register leads in the specialized CRM pipeline, and manage niche tasks.",
+      footerText: "Engineered to coordinate high-tier elite insurance client acquisition and distribution strategies with absolute precision."
+    };
+  });
+
+  const handleSaveLandingTexts = (texts: LandingPageTexts) => {
+    setLandingTexts(texts);
+    localStorage.setItem('agency_landing_texts', JSON.stringify(texts));
+  };
 
   // Layout View states
   const [activeTab, setActiveTab] = useState<ActiveTab>('tasks');
@@ -96,22 +202,28 @@ export default function App() {
     setTasks(prev => prev.filter(t => t.id !== taskId));
   };
 
-  // 5. CRM CLIENT ACTION
-  const handleAddCustomer = (company: string, contactName: string, email: string, value: string, status: 'Active' | 'Lead') => {
-    const newCust: Customer = {
-      id: `cust-${Date.now()}`,
-      company,
-      contactName,
-      email,
-      status,
-      value: value.startsWith('$') ? value : `$${value}`,
-      avatar: 'https://images.unsplash.com/photo-1531427186611-ecfd6d936c79?auto=format&fit=crop&w=120&q=80'
+  // 5. LEADS MANAGEMENT ACTIONS
+  const handleAddLead = (newLeadData: Omit<Lead, 'id' | 'createdAt'>) => {
+    const newLead: Lead = {
+      ...newLeadData,
+      id: `lead-${Date.now()}`,
+      createdAt: new Date().toISOString().split('T')[0]
     };
-    setCustomers(prev => [newCust, ...prev]);
+    const updated = [newLead, ...leads];
+    setLeads(updated);
+    localStorage.setItem('agency_leads', JSON.stringify(updated));
   };
 
-  const handleDeleteCustomer = (id: string) => {
-    setCustomers(prev => prev.filter(c => c.id !== id));
+  const handleUpdateLead = (updatedLead: Lead) => {
+    const updated = leads.map(l => l.id === updatedLead.id ? updatedLead : l);
+    setLeads(updated);
+    localStorage.setItem('agency_leads', JSON.stringify(updated));
+  };
+
+  const handleDeleteLead = (id: string) => {
+    const updated = leads.filter(l => l.id !== id);
+    setLeads(updated);
+    localStorage.setItem('agency_leads', JSON.stringify(updated));
   };
 
   // 6. ADDTIONAL MEMBERS (ADMIN PANEL ACTION)
@@ -121,6 +233,19 @@ export default function App() {
 
   const handleDeleteMember = (id: string) => {
     setMembers(prev => prev.filter(m => m.id !== id));
+  };
+
+  // 6b. TEAM MANAGEMENT ACTIONS
+  const handleAddTeam = (newTeam: AgentTeam) => {
+    const updated = [...teams, newTeam];
+    setTeams(updated);
+    localStorage.setItem('agency_teams', JSON.stringify(updated));
+  };
+
+  const handleDeleteTeam = (id: string) => {
+    const updated = teams.filter(t => t.id !== id);
+    setTeams(updated);
+    localStorage.setItem('agency_teams', JSON.stringify(updated));
   };
 
   // 7. SEND WORKSPACE CHAT CORRESPONDENCE WITH SIMULATED REPLIES
@@ -190,6 +315,7 @@ export default function App() {
         onLogin={handleLogin} 
         onEnterAsGuest={handleEnterAsGuest} 
         isDarkModeGlobal={isDarkMode} 
+        customTexts={landingTexts}
       />
     );
   }
@@ -217,7 +343,7 @@ export default function App() {
         onSelectSpaceFolder={(folder) => {
           setSelectedFolder(folder);
           // Auto switch to tasks tab when folders are selected
-          if (activeTab === 'chat' || activeTab === 'customers' || activeTab === 'admin') {
+          if (activeTab === 'chat' || activeTab === 'leads' || activeTab === 'admin' || activeTab === 'landing' || activeTab === 'agents') {
             setActiveTab('tasks');
           }
         }}
@@ -273,6 +399,8 @@ export default function App() {
                   isDarkMode={isDarkMode}
                   currentUser={currentUser}
                   selectedFolder={selectedFolder}
+                  customFields={customFields}
+                  onUpdateCustomFields={handleUpdateCustomFields}
                 />
               )}
 
@@ -300,11 +428,16 @@ export default function App() {
                 />
               )}
 
-              {activeTab === 'customers' && (
-                <CustomersView 
-                  customers={customers}
-                  onAddCustomer={handleAddCustomer}
-                  onDeleteCustomer={handleDeleteCustomer}
+              {activeTab === 'leads' && (
+                <LeadsView 
+                  leads={leads}
+                  agents={members}
+                  customFields={customFields}
+                  onAddLead={handleAddLead}
+                  onUpdateLead={handleUpdateLead}
+                  onDeleteLead={handleDeleteLead}
+                  currentUser={currentUser}
+                  isDarkMode={isDarkMode}
                 />
               )}
 
@@ -313,6 +446,30 @@ export default function App() {
                   members={members}
                   onAddMember={handleAddMember}
                   onDeleteMember={handleDeleteMember}
+                  teams={teams}
+                  onAddTeam={handleAddTeam}
+                  onDeleteTeam={handleDeleteTeam}
+                  tasks={tasks}
+                  isDarkMode={isDarkMode}
+                />
+              )}
+
+              {activeTab === 'agents' && (
+                <AgentsView 
+                  members={members}
+                  onAddMember={handleAddMember}
+                  onDeleteMember={handleDeleteMember}
+                  tasks={tasks}
+                  leads={leads}
+                  isDarkMode={isDarkMode}
+                  currentUser={currentUser}
+                />
+              )}
+
+              {activeTab === 'landing' && currentUser?.role === 'admin' && (
+                <LandingPageEditor 
+                  currentTexts={landingTexts}
+                  onSave={handleSaveLandingTexts}
                   isDarkMode={isDarkMode}
                 />
               )}
